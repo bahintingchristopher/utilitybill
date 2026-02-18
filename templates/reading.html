@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Rental Billing Manager</title>
+    <style>
+        /* --- BASE STYLES --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #f0f2f5; display: flex; min-height: 100vh; }
+
+        /* --- LOGIN SCREEN --- */
+        #login_screen {
+            position: fixed; width: 100%; height: 100vh;
+            background: linear-gradient(135deg, #2c3e50 0%, #2980b9 100%);
+            display: flex; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .login_card { background: white; padding: 40px; border-radius: 12px; width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .login_card input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 6px; }
+        .btn_primary { background: #3498db; color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+        /* --- DASHBOARD LAYOUT --- */
+        #main_dashboard { display: none; width: 100%; }
+
+        /* SIDEBAR */
+        .left_column {
+            width: 260px; background-color: #1a252f; color: white;
+            display: flex; flex-direction: column; position: fixed; height: 100%;
+        }
+        .branding { padding: 25px; text-align: center; font-weight: bold; font-size: 1.2rem; background: #121a21; color: #3498db; }
+
+        .menu_item_container { flex-grow: 1; padding-top: 20px; }
+        .menu_item_container a {
+            text-decoration: none; color: #bdc3c7; padding: 15px 25px;
+            display: flex; align-items: center; transition: 0.3s; cursor: pointer;
+        }
+        .menu_item_container a:hover { background: #2c3e50; color: white; }
+        .icon { margin-right: 15px; }
+
+        /* RIGHT CONTENT */
+        .right_column { flex: 1; margin-left: 260px; padding: 40px; }
+        .page_content { display: none; }
+        .active_page { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- TWO COLUMN UTILITY LAYOUT --- */
+        .utility_grid { display: flex; gap: 20px; margin-top: 20px; }
+        .utility_card {
+            flex: 1; background: white; padding: 25px; border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 5px solid #3498db;
+        }
+        .utility_card.electric { border-top-color: #f1c40f; } /* Yellow for Electricity */
+        .utility_card h3 { margin-bottom: 15px; color: #2c3e50; display: flex; align-items: center; gap: 10px; }
+
+        .form_group { margin-bottom: 15px; }
+        .form_group label { display: block; font-size: 0.85rem; color: #7f8c8d; margin-bottom: 5px; }
+        .form_group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+
+        /* --- TABLES --- */
+        .data_card { background: white; padding: 25px; border-radius: 10px; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; color: #7f8c8d; font-size: 11px; text-transform: uppercase; }
+        
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .bg-red { background: #f8d7da; color: #721c24; }
+        .bg-green { background: #d4edda; color: #155724; }
+
+        .logout_btn { margin: 20px; padding: 10px; border: 1px solid #e74c3c; color: #e74c3c; text-align: center; text-decoration: none; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div id="login_screen">
+    <div class="login_card">
+        <h2>Rental Manager Login</h2>
+        <input type="text" placeholder="Username">
+        <input type="password" placeholder="Password">
+        <button class="btn_primary" onclick="doLogin()">Login</button>
+    </div>
+</div>
+
+<div id="main_dashboard">
+    <div class="left_column">
+        <div class="branding">RENTAL BILLS</div>
+        <nav class="menu_item_container">
+            <a onclick="showPage('dash_home')"><span class="icon">🏠</span> Dashboard</a>
+            <a onclick="showPage('search_records')"><span class="icon">🔍</span> Search Records</a>
+            <a onclick="showPage('input_readings')"><span class="icon">✍️</span> Input New Readings</a>
+            <a onclick="showPage('unpaid_account')"><span class="icon">⚠️</span> Unpaid Account</a>
+            <a onclick="showPage('paid_account')"><span class="icon">✅</span> Paid Account</a>
+        </nav>
+        <a href="#" class="logout_btn" onclick="doLogout()">Logout</a>
+    </div>
+
+    <div class="right_column">
+        
+        <div id="dash_home" class="page_content active_page">
+            <h1>🏠 Overview</h1>
+            <p>Welcome! You are managing both Water and Electricity today.</p>
+        </div>
+
+        <div id="input_readings" class="page_content">
+            <h1>✍️ Input New Readings</h1>
+            <div class="form_group" style="margin-top:20px; max-width: 300px;">
+                <label>Select Room Number</label>
+                <input type="text" placeholder="e.g. Room 101">
+            </div>
+
+            <div class="utility_grid">
+                <div class="utility_card">
+                    <h3>💧 Water Billing</h3>
+                    <div class="form_group">
+                        <label>Previous Reading</label>
+                        <input type="number" value="1050" readonly style="background:#f9f9f9">
+                    </div>
+                    <div class="form_group">
+                        <label>Current Reading (m³)</label>
+                        <input type="number" placeholder="0.00">
+                    </div>
+                </div>
+
+                <div class="utility_card electric">
+                    <h3>⚡ Electricity Billing</h3>
+                    <div class="form_group">
+                        <label>Previous Reading</label>
+                        <input type="number" value="4200" readonly style="background:#f9f9f9">
+                    </div>
+                    <div class="form_group">
+                        <label>Current Reading (kWh)</label>
+                        <input type="number" placeholder="0.00">
+                    </div>
+                </div>
+            </div>
+            <button class="btn_primary" style="margin-top:20px; width: 200px;">Save All Readings</button>
+        </div>
+
+        <div id="unpaid_account" class="page_content">
+            <h1>⚠️ Unpaid Accounts</h1>
+            <div class="data_card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Room</th>
+                            <th>Tenant</th>
+                            <th>Water Due</th>
+                            <th>Electric Due</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Room 102</td>
+                            <td>Dindo Reyes</td>
+                            <td>₱240.00</td>
+                            <td>₱1,200.00</td>
+                            <td><span class="badge bg-red">UNPAID</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="search_records" class="page_content">
+            <h1>🔍 Search Records</h1>
+            <div class="data_card">
+                <input type="text" placeholder="Search by name..." style="width:100%; padding:10px; border-radius:5px; border:1px solid #ddd;">
+            </div>
+        </div>
+
+        <div id="paid_account" class="page_content">
+            <h1>✅ Paid Accounts</h1>
+            <div class="data_card">
+                <p>No records found for this period.</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function doLogin() {
+        document.getElementById('login_screen').style.display = 'none';
+        document.getElementById('main_dashboard').style.display = 'flex';
+    }
+    function doLogout() {
+        document.getElementById('login_screen').style.display = 'flex';
+        document.getElementById('main_dashboard').style.display = 'none';
+    }
+    function showPage(pageId) {
+        const pages = document.querySelectorAll('.page_content');
+        pages.forEach(p => p.classList.remove('active_page'));
+        document.getElementById(pageId).classList.add('active_page');
+    }
+</script>
+
+</body>
+</html>

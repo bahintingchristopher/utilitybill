@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Electric Billing Dashboard</title>
+
+
+
+    <style>
+        body { font-family: sans-serif; padding: 40px; background-color: #fdfdfd; }
+        .container { max-width: 800px; margin: auto; }
+        h1 { color: #f39c12; border-bottom: 2px solid #f1c40f; padding-bottom: 10px; }
+        .bill-card { background: white; border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .btn { background: #f39c12; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        .btn:hover { background: #e67e22; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Electricity Billing</h1>
+        <p>Manage electricity records for your rooms:</p>
+        {% for bill in bills %}
+        <div class="bill-card">
+            <div>
+                <strong>{{ bill.tenant_name }}</strong> (Room {{ bill.room_number }})<br>
+                <small>{{ bill.billing_date }} | {{ bill.consumption }} kWh used</small>
+            </div>
+            <a href="{% url 'electric_receipt' bill.id %}" class="btn">View Electric Receipt</a>
+        </div>
+        {% empty %}
+        <p>No electric bills found. <a href="/admin/electric_billing/electricbill/add/">Add one in Admin</a></p>
+        {% endfor %}
+        <br>
+        <a href="/water/">← Switch to Water Billing</a>
+    </div>
+</body>
+</html>

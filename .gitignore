@@ -1,0 +1,11 @@
+# Secret files
+.env
+
+# Python junk
+__pycache__/
+*.py[cod]
+db.sqlite3
+
+# Folder junk
+.DS_Store
+staticfiles/

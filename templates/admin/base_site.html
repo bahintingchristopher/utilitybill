@@ -1,0 +1,48 @@
+<!-- THIS IS THE SETTINGS FOR THE ADMIN DJANGO PORTAL -->
+
+
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }} | UTILITIES ADMIN PORTAL{% endblock %}
+
+{% block extrastyle %}
+<style>
+    /* Increase font size for the whole welcome area */
+    #user-tools {
+        font-size: 16px !important; /* Adjust size as needed */
+        font-weight: bold;
+    }
+
+    /* Target the greeting specifically */
+    #user-tools strong {
+        color: #f1c40f; /* Makes the username stand out */
+        font-size: 18px;
+    }
+
+    /* Increase size and styling for the links */
+    #user-tools a, #user-tools button {
+        font-size: 14px !important;
+        text-transform: uppercase;
+        padding: 0 5px;
+    }
+</style>
+{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">UTILITIES ADMIN PORTAL</a></h1>
+{% endblock %}
+
+{% block welcome-msg %}
+     WELCOME : <strong>{% firstof user.get_short_name user.get_username %} ||</strong>
+{% endblock %} 
+
+{% block userlinks %}
+    {% if site_url %}
+        <a href="{{ site_url }}">VISIT WEBPAGE</a> ||
+    {% endif %}
+    <a href="{% url 'admin:password_change' %}">SECURITY</a> ||
+    <form id="logout-form" method="post" action="{% url 'admin:logout' %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" style="background:none; border:none; color:#fff; cursor:pointer; font-family:inherit; font-weight:bold;">LOGOUT</button>
+    </form>
+{% endblock %}

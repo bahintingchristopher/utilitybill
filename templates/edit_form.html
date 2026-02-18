@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit {{ type|title }} Reading - {{ bill.tenant_name }}</title>
+    <style>
+        /* DASHBOARD LAYOUT CSS */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        
+        .main_dashboard { display: flex; width: 100%; min-height: 100vh; }
+        
+        /* Sidebar Styling */
+        .left_column { 
+            width: 260px; 
+            background-color: #1a252f; 
+            color: #ecf0f1; 
+            position: fixed; 
+            height: 100%; 
+            display: flex; 
+            flex-direction: column; 
+        }
+        
+        .branding { 
+            padding: 25px; 
+            font-size: 1.2rem; 
+            font-weight: bold; 
+            text-align: center; 
+            background-color: #121a21; 
+            color: #3498db; 
+        }
+
+        .menu_item_container a { 
+            text-decoration: none; 
+            color: #bdc3c7; 
+            padding: 15px 25px; 
+            display: block; 
+            transition: 0.3s; 
+            cursor: pointer;
+        }
+
+        .menu_item_container a:hover { background-color: #2c3e50; color: white; }
+
+        /* Dropdown Styling */
+        .dropdown { position: relative; display: block; }
+        .submenu { 
+            background-color: #34495e; 
+            padding-left: 20px; 
+            overflow: hidden; 
+            max-height: 0; 
+            transition: 0.3s ease; 
+        }
+        .dropdown:hover .submenu { max-height: 200px; padding: 5px 0 5px 20px; }
+        .submenu a { font-size: 0.9em; padding: 10px 15px; }
+
+        /* Right Column Content Area */
+        .right_column { 
+            flex: 1; 
+            margin-left: 260px; 
+            padding: 40px; 
+            background-color: #f4f7f6; 
+            display: flex;
+            justify-content: center; /* Centers the form horizontally */
+            align-items: flex-start;
+        }
+
+        /* EDIT FORM BOX STYLING */
+        .edit-container { 
+            background: #fff; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+            width: 100%; 
+            max-width: 450px; 
+            border-top: 5px solid {% if type == 'electric' %}#f1c40f{% else %}#3498db{% endif %}; 
+        }
+
+        h3 { margin-bottom: 20px; color: #333; }
+        
+        .tenant-info { 
+            background: #f9f9f9; 
+            padding: 15px; 
+            border-radius: 6px; 
+            margin-bottom: 20px; 
+            border-left: 4px solid #ddd; 
+        }
+
+        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: #555; }
+        
+        input, select { 
+            width: 100%; 
+            padding: 12px; 
+            margin-bottom: 20px; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+            font-size: 16px; 
+        }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+
+        .btn-save { 
+            background-color: #27ae60; 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            flex: 2; 
+            font-weight: bold; 
+        }
+
+        .btn-cancel { 
+            background-color: #e74c3c; 
+            color: white; 
+            text-align: center; 
+            text-decoration: none; 
+            padding: 12px; 
+            border-radius: 6px; 
+            flex: 1; 
+            font-size: 14px; 
+        }
+
+        .warning { 
+            color: #856404; 
+            background-color: #fff3cd; 
+            padding: 12px; 
+            border-radius: 6px; 
+            font-size: 13px; 
+            margin-bottom: 20px; 
+            border: 1px solid #ffeeba; 
+        }
+    </style>
+</head>
+<body>
+
+<div class="main_dashboard">
+    <div class="left_column">
+        <div class="branding">BILLING MANAGER</div>
+        <div class="menu_item_container">
+            <a href="{% url 'water_billing:summary' %}"><span class="icon">🏠</span> Dashboard</a>
+            <a href="#"><span class="icon">👤</span> New Account</a>
+            <a href="#"><span class="icon">🔍</span> Search Records</a>
+            
+            <div class="dropdown">
+                <a class="dropbtn"><span class="icon">✍️</span> Input Readings</a>
+                <div class="submenu">
+                    <a href="{% url 'water_billing:input' %}"><span class="icon">💧</span> >> Water</a>
+                    <a href="#"><span class="icon">⚡</span> >> Electric</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="logout_section" style="margin-top: auto; padding: 20px;">
+            <a href="/admin/logout/" style="color: #e74c3c; text-decoration: none; border: 1px solid #e74c3c; padding: 10px; display: block; text-align: center; border-radius: 4px;">Logout</a>
+        </div>
+    </div>
+
+    <div class="right_column">
+        <div class="edit-container">
+            <h3>Edit {{ type|title }} Reading</h3>
+            
+            <div class="tenant-info">
+                <strong>{{ bill.tenant_name }}</strong><br>
+                <span style="font-size: 13px; color: #666;">Room: {{ bill.room_number }} | Date: {{ bill.billing_date }}</span>
+            </div>
+
+            <div class="warning">
+                ⚠️ Updating these readings will automatically recalculate the <strong>Total Amount</strong>.
+            </div>
+
+            <form method="POST">
+                {% csrf_token %}
+                
+                <label>Previous Reading</label>
+                <input type="number" step="0.01" name="prev" value="{{ bill.previous_reading|floatformat:2 }}" required>
+
+                <label>Current Reading</label>
+                <input type="number" step="0.01" name="curr" value="{{ bill.current_reading|floatformat:2 }}" required>
+
+                <label>Rate per kWh</label>
+                <input type="number" step="0.01" name="rate" value="{{ bill.rate_per_kwh|floatformat:2 }}" required>
+
+                <label for="status">Payment Status</label>
+                <select name="status" id="status">
+                    <option value="UNPAID" {% if not bill.is_paid %}selected{% endif %}>🔴 UNPAID</option>
+                    <option value="PAID" {% if bill.is_paid %}selected{% endif %}>🟢 PAID</option>
+                </select>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn-save">Update Record</button>
+                    <a href="{% url 'billing_summary' %}" class="btn-cancel">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

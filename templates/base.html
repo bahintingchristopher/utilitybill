@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+</head>
+<body>
+    <div class="menu_item_container">
+    <a href="{% url 'water_billing:summary' %}?tab=dash_home"><span class="icon">🏠</span> Dashboard</a>
+    <a href="{% url 'water_billing:summary' %}?tab=new_account"><span class="icon">👤</span> New Account</a>
+    <a href="{% url 'water_billing:summary' %}?tab=search_records"><span class="icon">🔍</span> Search Records</a>
+    
+    <div class="dropdown">
+        <a class="dropbtn"><span class="icon">✍️</span> Input Readings</a>
+        <div class="submenu">
+            <a href="{% url 'water_billing:input' %}"><span class="icon">💧</span> >> Water</a>
+            <a href="#"><span class="icon">⚡</span> >> Electric</a>
+        </div>
+    </div>
+</div>
+        <div class="right_column">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+    </body>
+</html>

@@ -1,0 +1,608 @@
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water & Electric Rental Management</title>
+
+    <link rel="stylesheet" href="{% static 'css/main_style.css' %}">
+    
+</head>
+<body>
+    
+    <input type="checkbox" id="nav_checkbox" style="display: none;">
+
+    <label for="nav_checkbox" class="nav-overlay"></label>
+
+    <div class="heading_bar">
+        <div class="user-profile">
+            <h3>Welcome, {{ user.username|upper }}!</h3>
+        </div>
+        <label for="nav_checkbox" class="hamburger">
+            <span class="hamburger_icon">☰</span>
+        </label>
+    </div>
+  
+
+<div id="main_dashboard">
+   
+    <div class="left_column">
+         <!-- <div class="branding">UTILITY MANAGER</div> -->
+        
+        <nav class="menu_item_container">
+            <a class="nav-link" onclick="showPage('dash_home')"><span class="icon">🏠</span> UTILITY MAIN</a>
+            <a class="nav-link" onclick="showPage('new_account')"><span class="icon">👤</span> New Account</a>
+            <a class="nav-link" onclick="showPage('search_records')"><span class="icon">🔍</span> Search Records</a>
+            
+            <div class="dropdown">
+                <a class="dropbtn"><span class="icon">✍️</span> Input Readings</a>
+                <div class="submenu">
+                    <a class="nav-link" onclick="showPage('input_water')"><span class="icon">💧</span> >> Water</a>
+                    <a class="nav-link" onclick="showPage('input_electric')"><span class="icon">⚡</span> >> Electric</a>
+                </div>
+            </div>
+            <a class="nav-link" onclick="showPage('unpaid_account')"><span class="icon">⚠️</span> Unpaid</a>
+            <a class="nav-link" onclick="showPage('paid_account')"><span class="icon">✅</span> Paid</a>
+            
+            <form action="{% url 'logout' %}" method="post" class="logout_form">
+                    {% csrf_token %}
+                    <button type="submit" class="logout_btn">Logout</button>
+            </form>
+        </nav>
+        
+    </div>
+
+    <div class="right_column">
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+                <div class="alert {{ message.tags }}" style="padding: 15px; margin-bottom: 20px; border-radius: 4px; color: #3c763d; background-color: #dff0d8; border: 1px solid #d6e9c6;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div id="dash_home" class="page_content active_page">
+            <form method="GET" action="" style="margin-bottom: 25px; display: flex; gap: 10px; align-items: flex-end; background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                <input type="hidden" name="tab" value="dash_home">
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; color: #7f8c8d;">SELECT MONTH</label>
+                            <select name="month" style="margin-bottom: 0;">
+                                <option value="1">January</option>
+                                <option value="2">February</option>
+                                <option value="3">March</option>
+                                <option value="4">April</option>
+                                <option value="5">May</option>
+                                <option value="6">June</option>
+                                <option value="7">July</option>
+                                <option value="8">August</option>
+                                <option value="9">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 11px; color: #7f8c8d;">SELECT YEAR</label>
+                    <select name="year" style="margin-bottom: 0;">
+                        <option value="2024">2024</option>
+                        <option value="2025" >2025</option>
+                        <option value="2026" selected >2026</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn_blue" style="height: 42px;">Filter Overview</button>
+            </form>
+
+           <h1>📊 Financial Overview for {{ selected_month_name|default:"Current" }} {{ selected_year|default:current_year }}</h1>
+            <div class="stats_grid">
+                <div class="stat_card" style="border-left: 5px solid #e74c3c;">
+                    <p style="color: #7f8c8d; font-size: 12px; margin-bottom: 5px;">TOTAL UNPAID</p>
+                    <h2 style="color: #e74c3c;">₱{{ grand_total_unpaid|floatformat:2|intcomma }}</h2>
+                </div>
+                <div class="stat_card" style="border-left: 5px solid #27ae60;">
+                    <p style="color: #7f8c8d; font-size: 12px; margin-bottom: 5px;">TOTAL PAID</p>
+                    <h2 style="color: #27ae60;">₱{{ grand_total_paid|floatformat:2|intcomma }}</h2>
+                </div>
+            </div>
+ 
+            <div class="table_container">
+                <h3>📋 Recent Water Transactions</h3>
+                <table>
+                    <thead>
+                        <tr><th>Date</th><th>Period</th><th>Tenant</th><th>Prev</th><th>Curr</th><th>Usage</th><th>Total</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for bill in history_water|slice:":5" %}
+                        <tr>
+                            <td>{{ bill.billing_date|date:"M d, Y" }}</td>
+                            <td><strong>{{ bill.billing_period|date:"F Y"}}</strong></td> <!-- newly added for billing period-->
+                            <td>{{ bill.tenant_name }}</td>
+                            <td>{{ bill.previous_reading }}</td>
+                            <td>{{ bill.current_reading }}</td>
+                            <td>{{ bill.consumption }}</td>
+                            <td style="font-weight: bold;">₱{{ bill.total_amount|intcomma }}</td>
+                            <td><span class="status {% if bill.is_paid %}paid_tag{% else %}unpaid_tag{% endif %}">{{ bill.is_paid|yesno:"PAID,UNPAID" }}</span></td>
+                            <td class="action-cell">
+                                <a href="{% url 'water_billing:water_receipt' bill.id %}" target="_blank" class="btn-print">Print</a>
+                                <a href="{% url 'water_billing:edit_water_bill' bill.id %}" class="btn-edit">Edit</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="9">No water transactions yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <br>
+
+            <div class="table_container">
+                <h3>📋 Recent Electric Transactions</h3>
+                <table>
+                    <thead>
+                        <tr><th>Date</th><th>Period</th><th>Tenant</th><th>Prev</th><th>Curr</th><th>Usage</th><th>Total</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for bill in history_electric|slice:":5" %}
+                        <tr>
+                            <td>{{ bill.billing_date|date:"M d, Y" }}</td>
+                            <td><strong>{{ bill.billing_period|date:"F Y"}}</strong></td> <!-- newly added for billing period-->
+                            <td>{{ bill.tenant_name }}</td>
+                            <td>{{ bill.previous_reading }}</td>
+                            <td>{{ bill.current_reading }}</td>
+                            <td>{{ bill.consumption }}</td>
+                            <td style="font-weight: bold;">₱{{ bill.total_amount|intcomma }}</td>
+                            <td><span class="status {% if bill.is_paid %}paid_tag{% else %}unpaid_tag{% endif %}">{{ bill.is_paid|yesno:"PAID,UNPAID" }}</span></td>
+                            <td class="action-cell">
+                                <a href="{% url 'electric_billing:electric_receipt' bill.id %}" target="_blank" class="btn-print">Print</a>
+                                <a href="{% url 'electric_billing:edit_electric_bill' bill.id %}" class="btn-edit">Edit</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="9">No electric transactions yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <br>
+
+        <div id="search_records" class="page_content {% if query %}active_page{% endif %}">
+            <h1>🔍 Records & History</h1>
+            <form method="GET" action="" style="margin: 20px 0; display: flex; gap: 10px;">
+                <input type="hidden" name="tab" value="search_records">
+                <select name="u_type" style="padding: 10px; border-radius: 4px; border: 1px solid #ddd; width: 160px; margin-bottom: 0;">
+                    <option value="both" {% if u_type == 'both' %}selected{% endif %}>All Utilities</option>
+                    <option value="water" {% if u_type == 'water' %}selected{% endif %}>💧 Water Only</option>
+                    <option value="electric" {% if u_type == 'electric' %}selected{% endif %}>⚡ Electric Only</option>
+                </select>
+                <input type="text" name="q" placeholder="Enter Tenant Name..." value="{{ query|default:'' }}" style="flex: 1; margin-bottom: 0;">
+                <button type="submit" class="btn_blue">Search</button>
+            </form>
+
+            {% if query %}
+                {% if u_type == 'both' or u_type == 'water' %}
+                    <div class="table_container">
+                        <h3>💧 Water Records</h3>
+                        <table>
+                            <thead>
+                                <tr><th>Date</th><th>Period</th><th>Prev</th><th>Curr</th><th>Usage</th><th>Total</th><th>Status</th><th>Action</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for bill in history_water %}
+                                <tr>
+                                    <td>{{ bill.billing_date|date:"M d, Y" }}</td>
+                                    <td><strong>{{ bill.billing_period|date:"F Y"}}</strong></td> <!-- newly added for billing period-->
+                                    <td>{{ bill.previous_reading }}</td>
+                                    <td>{{ bill.current_reading }}</td>
+                                    <td>{{ bill.consumption }}</td>
+                                    <td style="font-weight: bold;">₱{{ bill.total_amount|intcomma }}</td>
+                                    <td><span class="status {% if bill.is_paid %}paid_tag{% else %}unpaid_tag{% endif %}">{{ bill.is_paid|yesno:"PAID,UNPAID" }}</span></td>
+                                    <td class="action-cell">
+                                        <a href="{% url 'water_billing:water_receipt' bill.id %}" target="_blank" class="btn-print">Print</a>
+                                        <a href="{% url 'water_billing:edit_water_bill' bill.id %}" class="btn-edit">Edit</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="9">No water records found for "{{ query }}"</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+
+                {% if u_type == 'both' or u_type == 'electric' %}
+                    <div class="table_container" style="margin-top: 30px;">
+                        <h3>⚡ Electric Records</h3>
+                        <table>
+                            <thead>
+                                <tr><th>Date</th><th>Period</th><th>Prev</th><th>Curr</th><th>Usage</th><th>Total</th><th>Status</th><th>Action</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for bill in history_electric %}
+                                <tr>
+                                    <td>{{ bill.billing_date|date:"M d, Y" }}</td>
+
+                                    <td style="font-weight: bold; color: #2c3e50;">
+                                        {{ bill.billing_period|date:"F Y"}}
+                                    </td>
+
+
+                                    <td>{{ bill.previous_reading }}</td>
+                                    <td>{{ bill.current_reading }}</td>
+                                    <td>{{ bill.consumption }}</td>
+                                    <td style="font-weight: bold;">₱{{ bill.total_amount|intcomma }}</td>
+                                    <td><span class="status {% if bill.is_paid %}paid_tag{% else %}unpaid_tag{% endif %}">{{ bill.is_paid|yesno:"PAID,UNPAID" }}</span></td>
+                                    <td class="action-cell">
+                                        <a href="{% url 'electric_billing:electric_receipt' bill.id %}" target="_blank" class="btn-print">Print</a>
+                                        <a href="{% url 'electric_billing:edit_electric_bill' bill.id %}" class="btn-edit">Edit</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="9">No electric records found for "{{ query }}"</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            {% else %}
+                <p style="text-align: center; color: #7f8c8d; margin-top: 40px;">Select a utility type and enter a name to begin.</p>
+            {% endif %}
+        </div>
+
+        <div id="new_account" class="page_content">
+            <h1>👤 New Renter Setup</h1>
+            <form action="{% url 'save_all_bills' %}" method="POST" style="margin-top: 20px;">
+                {% csrf_token %}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; max-width: 600px;">
+                    <div style="grid-column: span 2;"><label>Full Name</label><input type="text" name="tenant_name" required></div>
+                    <div><label>Room/Meter No.</label><input type="text" name="room_number" required></div>
+                    <div><label>Start Date</label><input type="date" name="billing_date" required></div>
+                    <input type="hidden" name="w_prev" value="0"><input type="hidden" name="e_prev" value="0">
+                    <div style="grid-column: span 2;"><label>Starting Water Reading</label><input type="number" step="0.01" name="w_curr" required></div>
+                    <div style="grid-column: span 2;"><label>Starting Electric Reading</label><input type="number" step="0.01" name="e_curr" required></div>
+                    <button type="submit" class="btn_blue" style="grid-column: span 2;">Create Account</button>
+                </div>
+            </form>
+        </div>
+
+        
+        
+<div id="input_water" class="page_content">
+    <h1>💧 Water Reading Entry</h1>
+    <form action="{% url 'water_billing:save_water' %}" method="POST" style="margin-top: 20px;">
+        {% csrf_token %}
+
+        <!-- for the billing period -->
+        <input type="hidden" name="billing_period" id="w_period_val">
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; max-width: 600px;">
+            <div style="grid-column: span 2;"><label>Tenant Name</label><input type="text" name="w_tenant_name" id="w_tenant_name" required></div>
+            <div><label>Room/Meter No.</label><input type="text" name="w_room_number" id="w_room_number" required></div>
+            
+            <div><label>Billing Date</label><input type="date" name="billing_date" id="w_billing_date" required value="{% now 'Y-m-d' %}"></div>
+            
+            <h4 style="grid-column: span 2; color: #3498db; margin-top: 10px;">Water Readings</h4>
+            <div><label>Previous</label><input type="number" step="0.01" name="w_prev" id="w_prev" required></div>
+            <div><label>Current</label><input type="number" step="0.01" name="w_curr" required></div>
+            <div style="grid-column: span 2;">
+                <label>Rate per m³ (Current: ₱15.00)</label>
+                <input type="number" step="0.01" name="w_rate" value="15.00" required style="border: 2px solid #3498db;">
+            </div>
+            <button type="submit" id="w_save_btn" class="btn_blue" style="grid-column: span 2;">Save Water Reading</button> 
+        </div>
+    </form>
+</div>
+
+        
+   <div id="input_electric" class="page_content">
+    <h1>⚡ Electric Reading Entry</h1>
+    <form action="{% url 'electric_billing:save_electric' %}" method="POST" style="margin-top: 20px;">
+        {% csrf_token %}
+        
+        <input type="hidden" name="billing_period" id="e_period_val">
+        <input type="hidden" name="tab" value="input_electric">
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; max-width: 600px;">
+            <div style="grid-column: span 2;"><label>Tenant Name</label><input type="text" name="e_tenant_name" id="e_tenant_name" required></div>
+            <div><label>Room/Meter No.</label><input type="text" name="e_room_number" id="e_room_number" required></div>
+            
+            <div><label>Billing Date</label><input type="date" name="billing_date" id="e_billing_date" required value="{% now 'Y-m-d' %}"></div>
+            
+            <h4 style="grid-column: span 2; color: #f39c12; margin-top: 10px;">Electric Readings</h4>
+            <div><label>Previous</label><input type="number" step="0.01" name="e_prev" id="e_prev" required></div>
+            <div><label>Current</label><input type="number" step="0.01" name="e_curr" id="e_curr" required></div>
+            
+        
+            <div>
+                <label>Rate per kWh</label>
+                <input type="number" step="0.01" name="e_rate" value="12.00" required>
+            </div>
+
+            <button type="submit" id="e_save_btn" class="btn_orange" style="grid-column: span 2;">Save Electric Reading</button>
+        </div>
+    </form>
+</div>
+
+
+
+
+        <div id="unpaid_account" class="page_content">
+            <h1>⚠️ Unpaid Accounts</h1>
+            <div class="table_container">
+                <table>
+                    <thead>
+                        <tr><th>Date</th><th>Period</th><th>Room</th><th>Tenant</th><th>Type</th><th>Usage</th><th>Balance</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for bill in unpaid_water %}
+                        <tr>
+                            <td>{{ bill.billing_date|date:"M d, Y" }}</td>
+                            <td><strong>{{ bill.billing_period|date:"F Y" }}</strong></td> <!-- newly added for billing period-->   
+                            <td>{{ bill.room_number }}</td>
+                            <td>{{ bill.tenant_name }}</td>
+                            <td><span style="color: #3498db;">💧 Water</span></td>
+                            <td>{{ bill.consumption }} <small>m³</small></td>
+                            <td style="font-weight: bold;">₱{{ bill.total_amount|floatformat:2|intcomma }}</td>
+                             <td class="action-cell">
+                                <a href="{% url 'water_billing:water_receipt' bill.id %}" target="_blank" class="btn-print">Print</a>
+                                <form method="post" action="{% url 'mark_bill_paid' bill.id 'water' %}" style="margin:0;">
+                                    {% csrf_token %} <button type="submit" class="btn_orange">Paid</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% for bill in unpaid_electric %}
+                        <tr>
+                            <td>{{ bill.billing_date|date:"M d, Y" }}</td>
+                            <td style="font-weight: bold; color: #2c3e50;"> 
+                                {{ bill.billing_period|date:"F Y"}}
+                            </td>
+                            <td>{{ bill.room_number }}</td>
+                            <td>{{ bill.tenant_name }}</td>
+                            <td><span style="color: #f39c12;">⚡ Electric</span></td>
+                            <td>{{ bill.consumption }} <small>kWh</small></td>
+                            <td style="font-weight: bold;">₱{{ bill.total_amount|floatformat:2|intcomma }}</td>              
+                            <td class="action-cell">
+                                <a href="{% url 'electric_billing:electric_receipt' bill.id %}" target="_blank" class="btn-print">Print</a>
+                                <form method="post" action="{% url 'mark_bill_paid' bill.id 'electric' %}" style="margin:0;">
+                                    {% csrf_token %} <button type="submit" class="btn_orange">Paid</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="paid_account" class="page_content">
+            <h1>✅ Paid Accounts</h1>
+            <div class="table_container">
+                <table>
+                    <thead>
+                        <tr><th>Date</th><th>Period</th><th>Room</th><th>Tenant</th><th>Type</th><th>Prev</th><th>Curr</th><th>Usage</th><th>Amount</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for bill in paid_water %}
+                        <tr> 
+                            <td>{{ bill.billing_date|date:"M d, Y" }}</td>
+                            <td>{{ bill.billing_period|date:"F Y"}}</td> <td>{{ bill.room_number }}</td>
+                            <td>{{ bill.tenant_name }}</td>
+                            <td><span style="color: #3498db;">💧 Water</span></td>
+                            <td>{{ bill.previous_reading }}</td>
+                            <td>{{ bill.current_reading }}</td>
+                            <td>{{ bill.consumption }} <small>m³</small></td>
+                            <td style="font-weight: bold;">₱{{ bill.total_amount|floatformat:2|intcomma }}</td>
+                            <td><span class="status paid_tag">PAID</span></td>
+                            <td><a href="{% url 'water_billing:water_receipt' bill.id %}" target="_blank" class="btn-print" style="background: #95a5a6;">Receipt</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+/**
+ * UI & TAB MANAGEMENT
+ */
+
+function showPage(pageId, element) {
+    // 1. Hide mobile menu
+    document.getElementById('nav_checkbox').checked = false; 
+
+    // 2. Hide all pages, show active one
+    document.querySelectorAll('.page_content').forEach(section => {
+        section.style.display = 'none'; 
+    });
+
+    const activeSection = document.getElementById(pageId);
+    if (activeSection) {
+        activeSection.style.display = 'block';
+    }
+
+    // 3. Update Sidebar Styling (Wayfinding)
+document.querySelectorAll('.menu_item_container a').forEach(link => {
+    // Get the function call string, e.g., "showPage('unpaid_account', this)"
+    const onclickAttr = link.getAttribute('onclick') || "";
+    
+    // Check for the EXACT pageId inside the single quotes
+    // This ensures 'paid' doesn't trigger 'unpaid'
+    const isExactMatch = onclickAttr.includes(`'${pageId}'`);
+
+    if (isExactMatch) {
+        link.classList.add('active');
+        // Reset manual styles since we are using the .active class now
+        link.style.borderLeft = ""; 
+        link.style.background = "";
+    } else {
+        link.classList.remove('active');
+        link.style.borderLeft = "";
+        link.style.background = "";
+    }
+});
+
+    // 4. Update URL without reload
+    const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + "?tab=" + pageId;
+    window.history.pushState({ path: newUrl }, '', newUrl);
+}
+
+/**
+ * AUTO-FILL SYSTEM
+ */
+function setupAutoFill(tenantSelector, roomSelector, prevSelector, apiUrl) {
+    const tenantField = document.querySelector(tenantSelector);
+    const roomField = document.querySelector(roomSelector);
+    const previousField = document.querySelector(prevSelector);
+
+    if (tenantField) {
+        tenantField.addEventListener('change', function() {
+            const tenantName = tenantField.value.trim();
+            if (!tenantName) return;
+
+            fetch(`${apiUrl}?name=${encodeURIComponent(tenantName)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (previousField) {
+                        previousField.value = data.last_reading || 0;
+                        previousField.dispatchEvent(new Event('input'));
+                    }
+                    if (roomField) roomField.value = data.room_number || "";
+                })
+                .catch(err => console.error("Auto-fill error:", err));
+        });
+    }
+}
+
+/**
+ * BILLING PERIOD & CALCULATION LOGIC
+ */
+const setupBillingLogic = (dateInputId, hiddenInputId, containerId, prevId, rateName) => {
+    const dateInput = document.getElementById(dateInputId);
+    const hiddenInput = document.getElementById(hiddenInputId);
+    const container = document.getElementById(containerId);
+    
+    if (!dateInput || !hiddenInput || !container) return;
+
+    const updatePeriod = () => {
+        if (dateInput.value) {
+            const date = new Date(dateInput.value);
+            date.setMonth(date.getMonth() - 1); 
+            
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            
+            hiddenInput.value = `${y}-${m}-01`; 
+
+            const periodStr = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            let display = dateInput.parentNode.querySelector('.period-preview');
+            if(!display) {
+                display = document.createElement('small');
+                display.className = 'period-preview';
+                display.style.display = 'block';
+                display.style.color = (containerId.includes('water')) ? '#3498db' : '#f39c12';
+                display.style.fontWeight = 'bold';
+                display.style.marginTop = '4px';
+                dateInput.parentNode.appendChild(display);
+            }
+            display.innerText = "Billing Period: " + periodStr;
+        }
+    };
+
+    const prevInp = document.getElementById(prevId);
+    const currInp = container.querySelector(`input[name$="_curr"]`);
+    const rateInp = container.querySelector(`input[name="${rateName}"]`);
+    const saveBtn = container.querySelector('button[type="submit"]');
+    const originalBtnText = saveBtn.innerText;
+
+    const calculateValues = () => {
+        const p = parseFloat(prevInp?.value) || 0;
+        const c = parseFloat(currInp?.value) || 0;
+        const r = parseFloat(rateInp?.value) || 0;
+        const usage = c - p;
+        const total = usage * r;
+
+        if (c > 0 && usage < 0) {
+            saveBtn.style.background = "#e74c3c";
+            saveBtn.innerText = "Error: Lower than previous";
+        } else if (c > 0) {
+            saveBtn.style.background = ""; 
+            saveBtn.innerText = `${originalBtnText} (₱${total.toLocaleString(undefined, {minimumFractionDigits: 2})})`;
+        } else {
+            saveBtn.innerText = originalBtnText;
+        }
+    };
+
+    dateInput.addEventListener('change', updatePeriod);
+    [prevInp, currInp, rateInp].forEach(el => el?.addEventListener('input', calculateValues));
+    updatePeriod();
+};
+
+/**
+ * INITIALIZATION (The Main Brain)
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // 1. Identify the current tab from the URL OR default to home
+    let activeTab = urlParams.get('tab') || 'dash_home';
+    
+    // 2. Handle Receipt Popups
+    const printWaterId = urlParams.get('print_water');
+    const printElectricId = urlParams.get('print_electric');
+
+    if (printWaterId || printElectricId) {
+        const id = printWaterId || printElectricId;
+        const type = printWaterId ? 'water' : 'electric';
+        
+        // Force the active tab to stay on the input form
+        activeTab = printWaterId ? 'input_water' : 'input_electric';
+        
+        // Safety check: Only open if we haven't already opened this specific ID
+        if (sessionStorage.getItem('last_id') !== id) {
+            sessionStorage.setItem('last_id', id);
+            const printUrl = `/${type}-billing/receipt/${id}/`;
+            window.open(printUrl, '_blank');
+        }
+
+        // Clean the URL bar so refreshing doesn't re-print
+        // We use "/" to reset the base URL but keep the logic working
+        window.history.replaceState({}, document.title, window.location.pathname + "?tab=" + activeTab);
+    }
+
+    // 3. IMPORTANT: Set the UI Page
+    // Calling this ensures the menu links stay active and clickable
+    showPage(activeTab);
+
+    // 4. Setup Form Logic (existing setup stays here)
+    setupBillingLogic('w_billing_date', 'w_period_val', 'input_water', 'w_prev', 'w_rate');
+    setupAutoFill('#w_tenant_name', '#w_room_number', '#w_prev', '/water-billing/get-last-data/');
+
+    setupBillingLogic('e_billing_date', 'e_period_val', 'input_electric', 'e_prev', 'e_rate');
+    setupAutoFill('#e_tenant_name', '#e_room_number', '#e_prev', '/electric-billing/get-last-data/');
+
+    document.getElementById('e_billing_date').dispatchEvent(new Event('change'));
+
+    // 5. Alert Auto-hide
+    setTimeout(() => {
+        document.querySelectorAll('.alert').forEach(msg => {
+            msg.style.transition = "opacity 0.5s ease";
+            msg.style.opacity = "0";
+            setTimeout(() => msg.remove(), 500);
+        });
+    }, 3000);
+});
+
+// for wayfinding of navmenu
+
+
+</script>
+</body>
+</html>
