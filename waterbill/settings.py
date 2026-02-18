@@ -29,8 +29,8 @@ DEBUG = os.getenv('DEBUG') == 'True'
 
 
 # This allows laptop and phone to see the site
-ALLOWED_HOSTS = ['192.168.1.9', '127.0.0.1', 'localhost']
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'utilitybill.pythonanywhere.com']
+# Clean this up to just one line
+ALLOWED_HOSTS = ['utilitybill.pythonanywhere.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -85,18 +85,8 @@ WSGI_APPLICATION = 'waterbill.wsgi.application'
 
 DATABASES = {
     'default': {
-        # 'ENGINE': 'mysql.connector.django', THIS IS FOR MYSQL
-        # 'NAME': os.getenv('DB_NAME'),
-        'ENGINE': 'django.db.backends.sqlite3', #THIS IS SQLITE3
+        'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT'),
-
-        'OPTIONS': {
-            'init_command': "SET time_zone='+08:00'",  # <--- Set timezone to Asia/Manila
-        },
     }
 }
 
