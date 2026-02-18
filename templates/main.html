@@ -402,6 +402,26 @@
                             <td><a href="{% url 'water_billing:water_receipt' bill.id %}" target="_blank" class="btn-print" style="background: #95a5a6;">Receipt</a></td>
                         </tr>
                         {% endfor %}
+        
+                    <!-- NEW CONTENT FOR THE ELECTRIC -->
+                        {% for bill in paid_electric %}
+                <tr> 
+                    <td>{{ bill.billing_date|date:"M d, Y" }}</td>
+                    <td>{{ bill.billing_period|date:"F Y"}}</td> 
+                    <td>{{ bill.room_number }}</td>
+                    <td>{{ bill.tenant_name }}</td>
+                    <td><span style="color: #f39c12;">⚡ Electric</span></td>
+                    <td>{{ bill.previous_reading }}</td>
+                    <td>{{ bill.current_reading }}</td>
+                    <td>{{ bill.consumption }} <small>kWh</small></td> <td style="font-weight: bold;">₱{{ bill.total_amount|floatformat:2|intcomma }}</td>
+                    <td><span class="status paid_tag">PAID</span></td>
+                    <td><a href="{% url 'electric_billing:electric_receipt' bill.id %}" target="_blank" class="btn-print" style="background: #95a5a6;">Receipt</a></td>
+                </tr>
+                {% endfor %}
+
+                {% if not paid_water and not paid_electric %}
+                <tr><td colspan="11" style="text-align: center; padding: 20px;">No paid records found.</td></tr>
+                {% endif %}
                     </tbody>
                 </table>
             </div>
