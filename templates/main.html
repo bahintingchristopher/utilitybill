@@ -487,7 +487,7 @@ function setupAutoFill(tenantSelector, roomSelector, prevSelector, apiUrl) {
             const tenantName = tenantField.value.trim();
             if (!tenantName) return;
 
-            fetch(`${apiUrl}?name=${encodeURIComponent(tenantName)}`)
+            fetch(`${apiUrl}?tenant_name=${encodeURIComponent(tenantName)}`)
                 .then(response => response.json())
                 .then(data => {
                     if (previousField) {
